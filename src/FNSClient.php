@@ -77,6 +77,12 @@ class FNSClient extends Component
     /** @var string мастер-токен, выданный ФНС */
     public $masterToken;
 
+    /** @var string мастер-токен, выданный ФНС */
+    public $proxyIp;
+
+    /** @var string мастер-токен, выданный ФНС */
+    public $proxyPass;
+
     /** @var int пауза между запросами, сек при ожидании ответа асинхронного сервиса */
     public $asyncPause = 1;
 
@@ -160,23 +166,155 @@ class FNSClient extends Component
     {
         $data = self::soapXML($request);
 
-        $req = $this->httpClient->post($url, $data, [
-            'Content-Type' => 'text/xml',
-            'FNS-OpenApi-UserToken' => base64_encode(__CLASS__),
-            'FNS-OpenApi-Token' => $token
+        $req = self::curl(self::API_URL.$url, $data, [
+            'headers'=>[
+                'Content-Type: text/xml',
+                'FNS-OpenApi-UserToken: '.base64_encode(__CLASS__),
+                'FNS-OpenApi-Token: '.$token
+            ],
+            'asBody'=>true,
+            'proxy'=>[
+                'value'=>$this->proxyIp,
+                'userpwd'=>$this->proxyPass,
+                'type'=>'socks5',
+            ],
+            'timeout'=>25,
         ]);
 
-        Yii::debug('Запрос: ' . $req->toString(), __METHOD__);
-        $res = $req->send();
-        Yii::debug('Ответ: ' . $res->toString(), __METHOD__);
-
-        if (! $res->isOk) {
-            throw new Exception('HTTP-error: ' . $res->statusCode);
+        if ( $req['info']['http_code']!=200 ) {
+            print_r($req);
+            exit;
         }
 
-        /** @noinspection PhpUndefinedFieldInspection */
-        return (new SimpleXMLElement($res->content))
+        return (new SimpleXMLElement(utf8_encode($req['result'])))
             ->children(self::XMLNS_SOAP)->Body;
+
+    }
+
+    public static function curl($url, $data=null, $params=[
+        'cookie'=>false,
+        'json'=>false,
+        'header'=>false,
+        'proxy'=>false,
+        'referer'=>false,
+        'origin'=>false,
+        'headers'=>[],
+        'post'=>false,
+        'timeout'=>10,
+        'generateAgent'=>false,
+        'asBody'=>false,
+        'sslversion'=>false,
+        'method'=>false,
+    ])
+    {
+        $ch = curl_init($url);
+
+        if ( $data || $params['post'] ) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ( $data ) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, ( !$params['asBody'] ) ? (($params['json']) ? json_encode($data) : http_build_query($data)) : $data);
+            }
+        }
+        if ( $params['method'] ) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $params['method']);
+        }
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, $params['header']);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if ( $params['sslversion'] ) {
+            curl_setopt($ch, CURLOPT_SSLVERSION, 3);
+        }
+
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $params['timeout']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $params['timeout']);
+
+        $headers = $params['headers'];
+
+        if ( $params['json'] ) {
+            $headers[] = 'Content-Type: application/json';
+//            $headers[] = 'x-requested-with: XMLHttpRequest';
+        }
+
+        if ( $params['origin'] ) {
+            $headers[] = 'origin: '.$params['origin'];
+        }
+
+        if ( $params['cookie'] ) {
+            curl_setopt($ch, CURLOPT_COOKIE, $params['cookie']);
+        }
+
+        if ( $params['referer'] ) {
+            curl_setopt($ch, CURLOPT_REFERER, $params['referer']);
+        }
+
+        if ( $params['proxy']=='tor' ) {
+            $proxy = '127.0.0.1:9150';
+        } else {
+            $proxy = $params['proxy'];
+        }
+
+        if ( $proxy ) {
+            if ( isset($proxy['value'])  ) {
+                curl_setopt($ch, CURLOPT_PROXY, $proxy['value']);
+            } else {
+                curl_setopt($ch, CURLOPT_PROXY, $proxy);
+            }
+            if ( $proxy=='127.0.0.1:9150' || (isset($proxy['type']) && $proxy['type']=='socks5') ) {
+                curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+            }
+            if ( isset($proxy['userpwd']) ) {
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy['userpwd']);
+            }
+        }
+
+        if ( is_array($headers) && count($headers)>0 ) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
+
+        if ( $params['header'] ) {
+            $_headers = [];
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION,
+                function($curl, $header) use (&$_headers)
+                {
+                    $len = strlen($header);
+                    $header = explode(':', $header, 2);
+                    if (count($header) < 2) // ignore invalid headers
+                        return $len;
+
+                    $_headers[strtolower(trim($header[0]))][] = trim($header[1]);
+
+                    return $len;
+                }
+            );
+        }
+
+        $result = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $error = null;
+        if ( curl_errno($ch) ) {
+            $error = curl_error($ch);
+        }
+
+        if ( $params['header'] ) {
+            $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header = mb_substr($result, 0, $header_size);
+            $body = mb_substr($result, $header_size);
+
+            return [
+                'info'=>$info,
+                'result'=>$body,
+                'headers'=>$_headers,
+                'error'=>$error,
+            ];
+        }
+
+        return [
+            'info'=>$info,
+            'result'=>$result,
+            'error'=>$error,
+        ];
     }
 
     /**
