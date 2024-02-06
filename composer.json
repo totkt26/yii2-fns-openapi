@@ -1,24 +1,19 @@
 {
-    "name": "dicr/yii2-fns-openapi",
+    "name": "totkt26/yii2-fns-openapi",
     "type": "yii2-extension",
     "license": "MIT",
-    "homepage": "https://gitlab.com/dicr/yii2-fns-openapi",
+    "homepage": "https://github.com/totkt26/yii2-fns-openapi",
     "description": "ФНС OpenAPI клиент для Yii2",
-    "keywords": ["dicr", "yii2", "fns", "openapi"],
+    "keywords": ["totkt26", "yii2", "fns", "openapi"],
     "authors": [
-        {
-            "name": "Igor Tarasov",
-            "email": "develop@dicr.org",
-            "homepage": "http://dicr.org",
-            "role": "developer"
-        }
+
     ],
     "support": {
-        "source": "https://gitlab.com/dicr/yii2-fns-openapi.git"
+        "source": "https://github.com/totkt26/yii2-fns-openapi.git"
     },
     "minimum-stability": "stable",
     "require": {
-        "php": "~7.2",
+        "php": "^7.4",
         "ext-simplexml": "*",
         "yiisoft/yii2": "~2.0",
         "yiisoft/yii2-httpclient": "~2.0",
