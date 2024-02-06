@@ -11,7 +11,7 @@
     "support": {
         "source": "https://github.com/totkt26/yii2-fns-openapi.git"
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "require": {
         "php": "*",
         "ext-simplexml": "*",
