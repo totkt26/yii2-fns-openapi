@@ -17,6 +17,7 @@
         "ext-simplexml": "*",
         "yiisoft/yii2": "~2.0",
         "yiisoft/yii2-httpclient": "~2.0",
+        "dicr/yii2-helper": "~4.0",
         "dicr/yii2-validate": "~2.2"
     },
     "autoload": {
