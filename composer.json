@@ -11,13 +11,13 @@
     "support": {
         "source": "https://github.com/totkt26/yii2-fns-openapi.git"
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
         "php": "*",
         "ext-simplexml": "*",
         "yiisoft/yii2": "~2.0",
         "yiisoft/yii2-httpclient": "~2.0",
-        "totkt26/yii2-helper": "dev-master",
+        "totkt26/yii2-helper": "1.0.0",
         "dicr/yii2-validate": "~2.2"
     },
     "autoload": {
