@@ -134,6 +134,22 @@ class FNSClient extends Component
     }
 
     /**
+     * Самозакрывающийся тэг XML.
+     *
+     * @param string $name
+     * @param float|int|string|null $content
+     * @param array $options
+     * @return string
+     */
+    public static function xml(string $name, float|int|string|null $content = '', array $options = []): string
+    {
+        $content = (string)$content;
+
+        return '<' . $name . Html::renderTagAttributes($options) .
+            ($content === '' ? '/>' : '>' . $content . '</' . $name . '>');
+    }
+
+    /**
      * Документ soap.
      *
      * @param mixed $content содержимое Body
@@ -146,8 +162,8 @@ class FNSClient extends Component
             'xmlns:soap' => self::XMLNS_SOAP,
         ]);
 
-        echo Html::xml('soap:Header');
-        echo Html::xml('soap:Body', (string)$content);
+        echo self::xml('soap:Header');
+        echo self::xml('soap:Body', (string)$content);
         echo Html::endTag('soap:Envelope');
 
         return ob_get_clean();
