@@ -26,7 +26,7 @@ use dicr\fns\openapi\types\Message;
 use dicr\fns\openapi\types\ProcessingStatuses;
 use dicr\fns\openapi\types\SendMessageRequest;
 use dicr\fns\openapi\types\SendMessageResponse;
-use dicr\helper\Html;
+use yii\helpers\Html;
 use SimpleXMLElement;
 use Yii;
 use yii\base\Component;
