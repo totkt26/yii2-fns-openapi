@@ -87,7 +87,7 @@ class FNSClient extends Component
     public $asyncPause = 1;
 
     /** @var int кол-во попыток получения ответа при ожидании асинхронного сервиса */
-    public $asyncRetries = 5;
+    public $asyncRetries = 10;
 
     /**
      * @inheritDoc
@@ -412,7 +412,10 @@ class FNSClient extends Component
 
         if (empty($getMessageResponse->ProcessingStatus) ||
             $getMessageResponse->ProcessingStatus !== ProcessingStatuses::COMPLETED) {
-            throw new Exception('Ошибка получения ответа сообщения');
+//            throw new Exception('Ошибка получения ответа сообщения');
+            print_r('Ошибка получения ответа сообщения');
+            print_r($getMessageResponse);
+            exit;
         }
 
         return $getMessageResponse;
